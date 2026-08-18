@@ -1,3 +1,0 @@
-Assertion failed: Successful registration
-Expected: Your registration completed
-Actual: registrationPage.getSuccessfulRegistrationMsg().trim()
