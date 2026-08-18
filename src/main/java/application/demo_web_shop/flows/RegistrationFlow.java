@@ -16,16 +16,16 @@ public class RegistrationFlow {
         this.registrationPage = new RegistrationPage( driver );
     }
 
-    public LandingPage register(RegistrationUser registrationUser) {
+    public LandingPage register(String firstName, String lastName, String email, String password) {
         AllureManager.step("Register User", () -> {
 
             landingPage.header().clickRegisterLink();
             registrationPage.clickGenderMale();
-            registrationPage.fillFirstName(registrationUser.firstName());
-            registrationPage.fillLastName(registrationUser.lastName());
-            registrationPage.fillEmail(registrationUser.email());
-            registrationPage.fillPassword(registrationUser.password());
-            registrationPage.fillConfirmPassword(registrationUser.password());
+            registrationPage.fillFirstName(firstName);
+            registrationPage.fillLastName(lastName);
+            registrationPage.fillEmail(email);
+            registrationPage.fillPassword(password);
+            registrationPage.fillConfirmPassword(password);
             return registrationPage.clickRegisterButton();
 
         });
