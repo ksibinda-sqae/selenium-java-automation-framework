@@ -25,6 +25,7 @@ public class RegistrationPage extends BasePage {
 
     private final Element continueButton = new Element(By.cssSelector("input[value='Continue']"), "Continue Button");
 
+    // Actions
     public RegistrationPage(WebDriver driver) {
         super(driver);
     }
@@ -58,12 +59,23 @@ public class RegistrationPage extends BasePage {
         return new LandingPage(driver);
     }
 
+    // Return
+    public String getSuccessfulRegistrationMsg() {
+        return getText(successfulRegistrationMsg);
+    }
+
+    public LandingPage clickContinueButton() {
+        click(continueButton);
+        return new LandingPage(driver);
+    }
+
+    // States
     public boolean isSuccessfulRegistrationMsgDisplayed() {
         return isVisible(successfulRegistrationMsg);
     }
 
-    public String getSuccessfulRegistrationMsg() {
-        return getText(successfulRegistrationMsg);
+    public boolean isContinueButtonDisplayed() {
+        return isVisible(continueButton);
     }
 
 

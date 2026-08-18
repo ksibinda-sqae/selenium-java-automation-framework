@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ConfigManager {
+public final class ConfigManager {
 
         private static final Properties PROPERTIES = new Properties();
 
