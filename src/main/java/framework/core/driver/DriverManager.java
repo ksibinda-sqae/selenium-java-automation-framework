@@ -5,6 +5,7 @@ import framework.support.reporting.allure.AllureManager;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ public final class DriverManager {
 
     private static final Logger LOGGER = FrameworkLogger.getLogger(DriverManager.class);
     private static WebDriver driver;
+    private static final ChromeOptions CHROME_OPTIONS = new ChromeOptions();
 
     private DriverManager() {
         // Private constructor to prevent instantiation
@@ -26,13 +28,25 @@ public final class DriverManager {
             case CHROME -> {
 
                 try {
+
                     LOGGER.info("Creating driver for chrome");
 
                     AllureManager.addStep("Creating chrome");
 
+
                     WebDriverManager.chromedriver().setup();
 
-                    driver = new ChromeDriver();
+                    if (System.getenv("CI") != null) {
+                        CHROME_OPTIONS.addArguments("--headless");
+                        CHROME_OPTIONS.addArguments("--disable-gpu");
+                        CHROME_OPTIONS.addArguments("--no-sandbox");
+                        CHROME_OPTIONS.addArguments("--disable-dev-shm-usage");
+                        CHROME_OPTIONS.addArguments("--window-size=1920,1080");
+
+                        driver = new ChromeDriver(CHROME_OPTIONS);
+                    }else {
+                        driver = new ChromeDriver();
+                    }
 
                     yield driver;
 
