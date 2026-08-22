@@ -12,15 +12,21 @@ public final class EnvReader {
     private static final String ENV_FILE_NAME = ".env";
 
     static {
+        loadEnvFile();
+    }
+
+    private EnvReader() {
+    }
+
+    private static void loadEnvFile() {
+
         try (InputStream input = EnvReader.class
                 .getClassLoader()
                 .getResourceAsStream(ENV_FILE_NAME)) {
 
-            if (input == null) {
-                throw new FrameworkException(".env file not found");
+            if (input != null) {
+                ENV.load(input);
             }
-
-            ENV.load(input);
 
         } catch (IOException e) {
             throw new FrameworkException(
@@ -30,12 +36,17 @@ public final class EnvReader {
         }
     }
 
-    private EnvReader() {
-    }
-
     public static String get(String key) {
 
-        String value = ENV.getProperty(key.toUpperCase());
+        String normalizedKey = key.toUpperCase();
+
+        // CI / system environment variables take priority
+        String value = System.getenv(normalizedKey);
+
+        // Fall back to .env for local execution
+        if (value == null || value.isBlank()) {
+            value = ENV.getProperty(normalizedKey);
+        }
 
         if (value == null || value.isBlank()) {
             throw new FrameworkException(

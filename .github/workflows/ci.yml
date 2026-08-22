@@ -30,4 +30,10 @@ jobs:
           cache: maven
 
       - name: Run tests
+        env:
+          CI: true
+          REGISTRATION_PASSWORD: ${{ secrets.REGISTRATION_PASSWORD }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+
         run: mvn --batch-mode clean test
