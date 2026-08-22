@@ -5,6 +5,12 @@ on:
     - cron: '0 18 * * *'
 
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests against'
+        required: true
+        default: 'main'
+        type: string
 
 jobs:
   test:
