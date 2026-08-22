@@ -40,10 +40,8 @@ public final class EnvReader {
 
         String normalizedKey = key.toUpperCase();
 
-        // CI / system environment variables take priority
         String value = System.getenv(normalizedKey);
 
-        // Fall back to .env for local execution
         if (value == null || value.isBlank()) {
             value = ENV.getProperty(normalizedKey);
         }
