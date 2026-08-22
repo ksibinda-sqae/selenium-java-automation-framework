@@ -15,7 +15,6 @@ public final class DriverManager {
 
     private static final Logger LOGGER = FrameworkLogger.getLogger(DriverManager.class);
     private static WebDriver driver;
-    private static final ChromeOptions CHROME_OPTIONS = new ChromeOptions();
 
     private DriverManager() {
         // Private constructor to prevent instantiation
@@ -36,14 +35,16 @@ public final class DriverManager {
 
                     WebDriverManager.chromedriver().setup();
 
+                    LOGGER.info("CI environment variable: {}", System.getenv("CI"));
                     if (System.getenv("CI") != null) {
-                        CHROME_OPTIONS.addArguments("--headless");
-                        CHROME_OPTIONS.addArguments("--disable-gpu");
-                        CHROME_OPTIONS.addArguments("--no-sandbox");
-                        CHROME_OPTIONS.addArguments("--disable-dev-shm-usage");
-                        CHROME_OPTIONS.addArguments("--window-size=1920,1080");
+                        ChromeOptions chromeOptions = new ChromeOptions();
+                        chromeOptions.addArguments("--headless");
+                        chromeOptions.addArguments("--disable-gpu");
+                        chromeOptions.addArguments("--no-sandbox");
+                        chromeOptions.addArguments("--disable-dev-shm-usage");
+                        chromeOptions.addArguments("--window-size=1920,1080");
 
-                        driver = new ChromeDriver(CHROME_OPTIONS);
+                        driver = new ChromeDriver(chromeOptions);
                     }else {
                         driver = new ChromeDriver();
                     }
