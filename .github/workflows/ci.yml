@@ -1,0 +1,33 @@
+name: Selenium Automation Tests
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests against'
+        required: true
+        default: 'main'
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || 'main' }}
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn --batch-mode clean test
