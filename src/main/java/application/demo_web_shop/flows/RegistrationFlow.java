@@ -1,6 +1,5 @@
 package application.demo_web_shop.flows;
 
-import application.demo_web_shop.data.users.RegistrationUser;
 import application.demo_web_shop.pages.LandingPage;
 import application.demo_web_shop.pages.RegistrationPage;
 import framework.support.reporting.allure.AllureManager;
