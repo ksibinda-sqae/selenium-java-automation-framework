@@ -61,11 +61,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
-          path: allure-results/
+          path: reports/allure-results/
           retention-days: 7
 
   allure-report:
-    name: Generate & Deploy Allure Report
+    name: allure-report
     # Generate and deploy Allure test report to GitHub Pages
     # See: docs/how-to/README.md for Allure report generation guide
     needs: test
@@ -87,7 +87,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: allure-results
-          path: allure-results/
+          path: reports/allure-results/
 
       - name: Setup Java for Allure CLI
         uses: actions/setup-java@v4
@@ -95,18 +95,21 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Setup Node.js for Allure CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
       - name: Install Allure CLI
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y allure
+        run: npm install -g allure-commandline
 
       - name: Generate Allure Report
-        run: allure generate allure-results/ -o allure-report
+        run: allure generate reports/allure-results/ -o reports/allure-report --clean
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: allure-report/
+          path: reports/allure-report/
 
       - name: Deploy to GitHub Pages
         id: deployment
