@@ -1,9 +1,13 @@
 name: Demo Web Shop Pipeline
+# Test automation pipeline for the Demo Web Shop application
+# Runs tests, generates Allure reports, and deploys to GitHub Pages
+# See: docs/how-to/README.md for framework documentation
 
 on:
   schedule:
+    # Run tests daily at 18:00 UTC
     - cron: '0 18 * * *'
-
+  # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
 
 jobs:
@@ -12,20 +16,101 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      - name: Run tests
+      - name: Verify required secrets
+        # Ensures all required test credentials are configured
+        # See: README.md CI/CD Pipeline section for required secrets list
+        shell: bash
+        env:
+          REGISTRATION_PASSWORD: ${{ secrets.REGISTRATION_PASSWORD }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          secrets=("REGISTRATION_PASSWORD" "USERNAME" "PASSWORD")
+          for secret in "${secrets[@]}"; do
+            if [ -z "$(eval echo \$$secret)" ]; then
+              echo "Missing required secret: $secret"
+              exit 1
+            fi
+          done
+          echo "All required secrets are configured"
+
+      - name: Run tests with Maven
+        # Executes all tests configured in src/test/resources/testng.xml
+        # CI environment variable triggers headless mode in DriverManager
+        # See: docs/how-to/testing-conventions.md for running tests guide
         env:
           CI: true
           REGISTRATION_PASSWORD: ${{ secrets.REGISTRATION_PASSWORD }}
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
-
         run: mvn --batch-mode clean test
+
+      - name: Upload Allure results
+        # Preserves test results for report generation
+        # Retained for 7 days in GitHub Actions artifact storage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: reports/allure-results/
+          retention-days: 7
+
+  allure-report:
+    name: allure-report
+    # Generate and deploy Allure test report to GitHub Pages
+    # See: docs/how-to/README.md for Allure report generation guide
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: reports/allure-results/
+
+      - name: Setup Java for Allure CLI
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Node.js for Allure CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Allure CLI
+        run: npm install -g allure-commandline
+
+      - name: Generate Allure Report
+        run: allure generate reports/allure-results/ -o reports/allure-report --clean
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/allure-report/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

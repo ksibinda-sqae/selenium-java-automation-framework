@@ -1,87 +1,219 @@
-Selenium Java Automation Framework - How-To Guide
+# Selenium Java Automation Framework - Technical Documentation
 
-Overview
+## Overview
 
-This documentation provides quick start and how-to guidance for the Selenium Java Automation Framework in this repository. It mirrors a Playwright-style README but is adapted to use Java, Selenium WebDriver, TestNG, WebDriverManager and Allure.
+This directory contains in-depth technical documentation for developers working with the Selenium Java Automation Framework. These guides provide detailed architecture, conventions, and best practices for extending and maintaining the framework.
 
-Contents
+**For project overview and quick start, see [../README.md](../README.md)**
 
-- architecture-overview.md — Architecture, data flow and where to find core classes
-- framework-conventions.md — Naming conventions, file organization and coding rules
-- testing-conventions.md — TestNG usage, running tests, reporting and best practices
+## Documentation Structure
 
-Prerequisites
+| Document | Audience | Purpose |
+|----------|----------|---------|
+| **[architecture-overview.md](architecture-overview.md)** | Developers | System design, component architecture, data flow, best practices |
+| **[framework-conventions.md](framework-conventions.md)** | Contributors | Naming standards, file organization, coding rules, import order |
+| **[testing-conventions.md](testing-conventions.md)** | Test Authors | Test writing guidelines, patterns, TestNG integration, CI/CD setup |
 
-- Java 21 (or compatible JDK)
-- Maven
-- Internet access (WebDriverManager downloads browser drivers)
+## Getting Started with Development
 
-Installation
+### Prerequisites
+- **Java 21+** (or compatible JDK)
+- **Maven 3.6+**
+- **Git**
+- **Allure CLI** (for report generation)
+- **Internet access** (WebDriverManager downloads browser drivers on first run)
 
-Install dependencies and build:
+### Install Allure CLI
 
-    mvn clean install
+**Option 1: Using npm (Recommended)**
+```bash
+npm install -g allure-commandline
+```
 
-Ensure configuration files exist:
+**Option 2: Using Homebrew (macOS/Linux)**
+```bash
+brew install allure
+```
 
-- Copy src/main/resources/.env.example to src/main/resources/.env and update any environment-specific values.
-- Primary runtime settings live in src/main/resources/config.properties (base.url, browser).
+**Option 3: Using Chocolatey (Windows)**
+```bash
+choco install allure
+```
 
-Running Tests
+**Verify installation:**
+```bash
+allure --version
+```
 
-Run all tests (TestNG suite configured in src/test/resources/testng.xml):
+### Initial Setup
 
-    mvn test
+```bash
+git clone https://github.com/ksibinda-sqae/selenium-java-automation-framework.git
+cd selenium-java-automation-framework
+mvn clean install
+```
 
-Run a specific test class:
+### Configuration Files
 
-    mvn -Dtest=demo_web_shop.RegistrationPageTests test
+**Environment variables** (credentials, base URLs):
+```bash
+cp src/main/resources/.env.example src/main/resources/.env
+# Edit with your test environment values
+```
 
-Run TestNG groups:
+**Application properties** (browser, timeouts, logging):
+- `src/main/resources/config.properties` — Runtime configuration
+- `src/main/resources/logback.xml` — Logging configuration
 
-    mvn test -Dgroups=smoke
+**Test suite configuration**:
+- `src/test/resources/testng.xml` — Test groups, parallel execution, listeners
 
-Parallel execution:
+## Common Development Tasks
 
-- Configure parallelism in src/test/resources/testng.xml (parallel="methods|tests|classes" thread-count="N") or via Surefire/TestNG plugin properties.
-- CI detection (headless) is implemented in framework.core.driver.DriverManager using the CI environment variable.
+### Running Tests Locally
 
-Reporting
+**Full suite:**
+```bash
+mvn test
+```
 
-Allure results are produced in allure-results. Generate and open the report:
+**Specific test class:**
+```bash
+mvn -Dtest=demo_web_shop.RegistrationPageTests test
+```
 
-    mvn test
-    allure generate allure-results -o allure-report --clean
-    allure open allure-report
+**Single test method:**
+```bash
+mvn -Dtest=demo_web_shop.RegistrationPageTests#TC001_userCanRegisterWithValidData test
+```
 
-Surefire/TestNG reports are available under target/surefire-reports.
+**By TestNG group (smoke, reg, ui, api, auth, func):**
+```bash
+mvn test -Dgroups=smoke
+```
 
-Architecture
+**Parallel execution:**
+```xml
+<!-- Edit src/test/resources/testng.xml -->
+<suite name="Demo Web Shop Automation Suite" parallel="methods" thread-count="4">
+```
 
-Tests
-↓
-Flows
-↓
-Pages / API Clients
-↓
-Core Framework
-↓
-Selenium WebDriver
+### Generating Reports
 
-See docs/how-to/architecture-overview.md for detailed architecture and file mappings.
+**Local report generation:**
+```bash
+mvn test
+allure generate reports/allure-results -o reports/allure-report --clean
+allure open reports/allure-report
+```
 
-Contributing
+**Report artifacts:**
+- `reports/allure-results/` — Raw Allure test results (generated by tests)
+- `reports/allure-report/` — Compiled Allure HTML report (generated by Allure CLI)
+- `target/surefire-reports/` — TestNG/Surefire HTML reports
 
-Before contributing:
-- Follow the framework conventions in framework-conventions.md
-- Keep separation of concerns (pages, flows, tests)
-- Avoid hard-coded secrets; use .env for environment values
-- Run mvn test locally and ensure Allure artifacts are produced when appropriate
+### Debugging Tests
 
-How-To Guide
+**Run single test in IDE with debugger:**
+1. Set breakpoint in test or page object
+2. Right-click test class/method → Debug As → JUnit Test
+3. DriverManager detects non-CI environment and runs with UI (non-headless)
 
-Start with architecture-overview.md, then framework-conventions.md and testing-conventions.md to follow repository standards when adding tests or framework code.
+**Enable verbose logging:**
+```bash
+mvn test -X  # Maven debug
+mvn test -DargLine="-Dlogback.configurationFile=src/main/resources/logback-debug.xml"  # If available
+```
 
-Contact / Further Help
+## Framework Architecture (Quick Reference)
 
-Open an issue or request specific examples (sample TestNG parallel config, example Test class) if you want concrete snippets added to these how-to pages.
+```
+Test Execution Flow:
+Test Case
+  ↓ (uses)
+Flows / Assertions (high-level business operations)
+  ↓ (delegates to)
+Page Objects (UI element encapsulation)
+  ↓ (uses)
+BrowserActions, WaitManager (stable interactions)
+  ↓ (wrapped by)
+DriverManager (WebDriver lifecycle)
+  ↓ (uses)
+Selenium WebDriver (browser automation)
+```
+
+**Key directories:**
+- `src/main/java/framework/` — Core framework (drivers, config, waits)
+- `src/main/java/application/` — Application-specific pages, flows, fixtures
+- `src/test/java/` — Test classes and test utilities
+- `src/main/resources/` — Configuration, properties, logging
+
+See [architecture-overview.md](architecture-overview.md) for detailed component descriptions.
+
+## Contributing Guidelines
+
+### Before Writing Code
+1. Read [framework-conventions.md](framework-conventions.md) for naming and organization
+2. Review [architecture-overview.md](architecture-overview.md) to understand component design
+3. Study [testing-conventions.md](testing-conventions.md) for testing patterns
+
+### When Adding New Tests
+1. Create test class in appropriate feature folder under `src/test/java/`
+2. Follow naming: `{Feature}Tests.java`
+3. Use TestNG groups (`@Test(groups = {"smoke", "ui"})`)
+4. Follow Arrange-Act-Assert pattern
+5. Use existing page objects or create new ones in `src/main/java/application/`
+6. Run `mvn test` locally and verify Allure report
+
+### When Extending Framework
+1. Add utilities to `src/main/java/framework/support/`
+2. Update or create core components in `src/main/java/framework/core/`
+3. Document new classes and public methods
+4. Update this documentation if introducing new patterns
+
+### Code Review Checklist
+- [ ] Follows naming conventions (see framework-conventions.md)
+- [ ] Maintains separation of concerns (pages vs flows vs tests)
+- [ ] No hard-coded secrets or credentials
+- [ ] Tests are independent and idempotent
+- [ ] Allure report artifacts generated cleanly
+- [ ] Updated relevant documentation
+
+## CI/CD Integration
+
+**Automated workflow:** `.github/workflows/ci.yml`
+- Runs on schedule (daily 18:00 UTC) or manual trigger
+- Runs full test suite on Ubuntu with Java 21
+- Generates Allure report and deploys to GitHub Pages
+- Requires GitHub Secrets: STANDARD_USERNAME, STANDARD_PASSWORD, etc.
+
+See [testing-conventions.md#cicd-integration](testing-conventions.md#cicd-integration) for detailed CI setup.
+
+## Troubleshooting
+
+**WebDriverManager fails to download drivers:**
+- Ensure internet access
+- Check firewall/proxy settings
+- Try manually: `mvn dependency:resolve`
+
+**Tests hang or timeout:**
+- Increase wait timeout in config.properties
+- Check if target application is running
+- Review WaitManager implementation in framework/core/waits/
+
+**Allure report not generating:**
+- Verify allure CLI is installed: `allure --version`
+- Ensure allure-results/ directory has test results
+- Check for errors in test execution logs
+
+**CI/CD secrets not configured:**
+- Go to GitHub repo → Settings → Secrets and Variables → Actions
+- Add all required secrets from list in testing-conventions.md
+
+## Further Help
+
+- **Architecture questions:** Read architecture-overview.md or study `src/main/java/framework/` source code
+- **Naming questions:** Refer to framework-conventions.md
+- **Test writing questions:** Check testing-conventions.md and existing tests
+- **Code questions:** Inline comments in source code provide implementation details
+- **Issues/Bugs:** Open a GitHub issue with error logs and reproduction steps
